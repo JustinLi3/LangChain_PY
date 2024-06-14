@@ -1,53 +1,74 @@
-from langchain_openai import ChatOpenAI 
+from dotenv import load_dotenv
+load_dotenv()
+
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate 
-from langchain_core.output_parsers import * 
+#To combine multiple documents into a single coherent chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from bs4 import BeautifulSoup   
-import requests
+from langchain_community.document_loaders import WebBaseLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores.faiss import FAISS
+from langchain.chains import create_retrieval_chain
 
-URL = "https://ods.od.nih.gov/factsheets/ExerciseAndAthleticPerformance-HealthProfessional/" 
-page = requests.get(URL) 
-soup = BeautifulSoup(page.content, "html.parser")  
-#Check status code 
-results = soup.find('body') 
-text = results.get_text() 
-print(text)
+# Retrieve Data
+def get_docs(): 
+    #Create instance of WebBaseLoader and initializes it with url  
+    loader = WebBaseLoader('https://python.langchain.com/docs/expression_language/') 
+    #Retrieve content into docs
+    docs = loader.load()
+    #Initialize a text splitter with settings  chunks of 200 characters with 20 characters overlap
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=200,
+        chunk_overlap=20
+    )
+    #return a list of chunks
+    splitDocs = text_splitter.split_documents(docs)
 
-#Check if data has been scraped correctly 
-with open('dietary-data.txt','w') as file:
-    file.write(text) 
+    return splitDocs
 
-model = ChatOpenAI( 
-    api_key="",
-    model = "gpt-3.5-turbo-1106", 
-    temperature = 0.2
-)  
+def create_vector_store(docs): 
+    #Create an instance of embeddings 
+    embedding = OpenAIEmbeddings() 
+    #Organize documents into vectorStore with pre-computed data: embedding 
+    vectorStore = FAISS.from_documents(docs, embedding=embedding)
+    return vectorStore
 
 
-prompt  = ChatPromptTemplate.from_messages([
-    ("system", "Provide information about the following with this context: {context}"), 
-    ("human", "{input}"), 
-])  
+def create_chain(vectorStore):
+    model = ChatOpenAI(
+        temperature=0.4,
+        model='gpt-3.5-turbo-1106'
+    )
 
-parser = StrOutputParser();
+    prompt = ChatPromptTemplate.from_template("""
+    Answer the user's question.
+    Context: {context}
+    Question: {input}
+    """)
 
-#identical to piping, with just the feature to pass in additional documents
-chain = create_stuff_documents_chain(
-    llm = model,  
-    prompt = prompt,
-    output_parser= parser 
-    doc
-)
+    # chain = prompt | model
+    document_chain = create_stuff_documents_chain(
+        llm=model,
+        prompt=prompt
+    )
+
+    retriever = vectorStore.as_retriever()
+
+    retrieval_chain = create_retrieval_chain(retriever, document_chain)
+
+    return retrieval_chain
+
+
+docs = get_docs()
+vectorStore = create_vector_store(docs)
+chain = create_chain(vectorStore)
 
 response = chain.invoke({
-    "input" : input("Feel free to ask about any dietary supplement: "),
-    "context" : []
-}) 
+    "input": "What is LCEL?",
+})
 
 print(response)
-
-#It is very essential that we provide our AI application databases/libraries in order to avoid faulty answers or hallucinations 
-#AI can only accurately answer what it is being trained on 
 
 
 
