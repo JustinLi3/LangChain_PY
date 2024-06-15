@@ -17,7 +17,7 @@ def get_docs():
     loader = WebBaseLoader('https://python.langchain.com/docs/expression_language/') 
     #Retrieve content into docs
     docs = loader.load()
-    #Initialize a text splitter with settings  chunks of 200 characters with 20 characters overlap
+    #Initialize a text splitter with settings chunks of 200 characters with 20 characters overlap
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=200,
         chunk_overlap=20
@@ -52,11 +52,12 @@ def create_chain(vectorStore):
         llm=model,
         prompt=prompt
     )
-
+    
+    #transforms vector store into a search tool 
     retriever = vectorStore.as_retriever()
-
+    #Creates chain with the search tool 
     retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
+    #
     return retrieval_chain
 
 
