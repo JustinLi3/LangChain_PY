@@ -2,17 +2,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate 
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder 
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores.faiss import FAISS
 from langchain.chains import create_retrieval_chain  
-#Import background knowledge (i guess like roleplaying)
 from langchain_core.messages import HumanMessage, AIMessage  
-#Import placeholder for chat history
-from langchain_core.prompts import MessagesPlaceholder 
 from langchain.chains.history_aware_retriever import create_history_aware_retriever
 
 def get_docs(): 
@@ -41,7 +38,7 @@ def create_chain(vectorStore):
     prompt = ChatPromptTemplate.from_messages([
         ("system", "Answer the user's questions based on the context: {context}"),  
         #This is how you pass in a placeholder for background knowledge 
-        #Placeholder/Temp storage for messages 
+        #Placeholder/Temp storage for messages, points to the list to use all the notes inside when responding 
         MessagesPlaceholder(variable_name="chatHistory"),
         ("human","{input}"),
     ])
@@ -94,7 +91,7 @@ if __name__ == '__main__':
             break   
         response = processQuestion(chain,userInput, chatHistory) 
         chatHistory.append(HumanMessage(content = userInput))
-        chatHistory.append(AIMessage(content= response))
+        chatHistory.append(AIMessage(content= response)) 
         print("Assistant:", response)
 
 
