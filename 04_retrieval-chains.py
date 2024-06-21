@@ -8,7 +8,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores.faiss import FAISS
+from langchain_community.vectorstores.chroma import Chroma
 from langchain.chains import create_retrieval_chain
 
 # Retrieve Data
@@ -31,7 +31,7 @@ def create_vector_store(docs):
     #Create an instance of embeddings 
     embedding = OpenAIEmbeddings() 
     #Organize documents into vectorStore with pre-computed data: embedding 
-    vectorStore = FAISS.from_documents(docs, embedding=embedding)
+    vectorStore = Chroma.from_documents(docs, embedding=embedding)
     return vectorStore
 
 
