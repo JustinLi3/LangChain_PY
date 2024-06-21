@@ -1,0 +1,8 @@
+ex: Lets say you have a set of documents and you want to query them and retrieve a result quickly 
+
+Components of Rag Pipeline 
+1. Load data source: Rag is about querying form a different data source (PDF, readme, excel file, txt, database file) 
+2. Reading data, Chunking, Embedding 
+3. Vector Store 
+4. Retrieval  
+
